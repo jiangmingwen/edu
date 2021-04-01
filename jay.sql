@@ -582,6 +582,7 @@ BEGIN
                 `enabled` tinyint(1) NULL COMMENT '是否开启，枚举，boolean',
                 `age_min` int(2) NULL COMMENT '最小年龄',
                 `age_max` int(2) NULL COMMENT '最大年龄',
+                `code` varchar(8) NULL COMMENT '学段，枚举',
                 `delete_flag` tinyint(1) NULL COMMENT '删除标识',
                 `remark` varchar(255) NULL COMMENT '备注',
                 `update_time` datetime NULL COMMENT '更新时间',
@@ -635,7 +636,205 @@ BEGIN
                 PRIMARY KEY (`id`)
             );
 
+            -- 省市区表
+            CREATE TABLE sys_pcd  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` varchar(255) NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `type` int(1) NULL COMMENT '类型，枚举，省/市/区/街道/社区村/组号',
+                `code` varchar(8) NULL COMMENT '编码code:唯一',
+                `name` varchar(32) NULL COMMENT '名称',
+                `parent_id` int NULL COMMENT '上级id',
+                PRIMARY KEY (`id`)
+            );
 
+            -- 招生记录
+            CREATE TABLE rs_recruit_record  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` varchar(255) NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `name` varchar(32) NULL COMMENT '招生名称',
+                `study_year_start` datetime NULL COMMENT '学年开始时间',
+                `study_year_end` datetime NULL COMMENT '学年结束时间',
+                `period_id` int NULL COMMENT '学段id',
+                `period_code` int(1) NULL COMMENT '学段Code,枚举',
+                `start_time` datetime NULL COMMENT '招生开始时间',
+                `end_time` datetime NULL COMMENT '招生结束时间',
+                `brief` text NULL COMMENT '招生简章，富文本',
+                `tips` text NULL COMMENT '全局提示，逗号分隔',
+                `tel` text NULL COMMENT '咨询电话，逗号分隔',
+                `is_site` tinyint(1) NULL COMMENT '是否开启现场审核',
+                `is_apply_check` tinyint(1) NULL COMMENT '教管中心报名是否需要教委审核',
+                `is_adjust_check` tinyint(1) NULL COMMENT '教管中心调配是否需要教委审核',
+                `exam_id` int NULL COMMENT '对应考试_id，高中时',
+                `exam_name` int NULL COMMENT '对应考试名称，高中时',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 招生记录批次
+            CREATE TABLE rs_recruit_record_batch  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` varchar(255) NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `name` varchar(32) NULL COMMENT '批次名称',
+                `start_time` datetime NULL COMMENT '批次开始时间',
+                `end_time` datetime NULL COMMENT '批次结束时间',
+                `apply_start_time` datetime NULL COMMENT '申报开始时间',
+                `apply_end_time` datetime NULL COMMENT '申报结束时间',
+                `check_start_time` datetime NULL COMMENT '审核开始时间',
+                `check_end_time` datetime NULL COMMENT '审核结束时间',
+                `admit_start_time` datetime NULL COMMENT '录取开始时间',
+                `admit_end_time` datetime NULL COMMENT '录取结束时间',
+                `period_batch_id` int NULL COMMENT '招生类型，rs_period_batch表的id',
+                `admit_type` int(1) NULL COMMENT '录取方式，枚举',
+                `description` varchar(255) NULL COMMENT '描述',
+                `is_enabled_apply` tinyint(1) NULL COMMENT '用户是否可以填报',
+                `is_apply_category` tinyint(1) NULL COMMENT '是否按照分类进行申报',
+                `sort_no` int(2) NULL COMMENT '批次顺序，前端显示',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 招生记录批次兼报关系
+            CREATE TABLE rs_recruit_record_togethor  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `target_id` int NULL COMMENT '兼报目标批次id',
+                `source_id` int NULL COMMENT '当前批次id',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 招生记录批次流程控制
+            CREATE TABLE rs_recruit_record_flow  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `recruit_record_batch_id` int NULL COMMENT '批次表id',
+                `period_batch_id` int NULL COMMENT '学段批次表id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `type` varchar(16) NULL COMMENT 'apply/check_online/check_site/admit\r\n填报/线上审核/现场审核/录取',
+                `sort_no` int(2) NULL COMMENT '表单排序',
+                `form_table` int NULL COMMENT '表单表',
+                `form_design` text NULL COMMENT '表单设计内容/如果是录取为通知书模板',
+                `name` varchar(32) NULL COMMENT '名称',
+                `form_temp_id` int NULL COMMENT '临时表的id',
+                `success` varchar(128) NULL COMMENT '成功模板',
+                `failed` varchar(128) NULL COMMENT '失败模板',
+                `notice_type` int(1) NULL COMMENT '推送方式，枚举',
+                `is_allow_revoke` tinyint(1) NULL COMMENT '是否允许撤销',
+                `is_need_confirm` tinyint(1) NULL COMMENT '是否需要确认',
+                `status` int(1) NULL COMMENT '状态，枚举', 
+                `is_enabled` tinyint(1) NULL COMMENT '是否填报内容',
+                `is_adjust` tinyint(1) NULL COMMENT '是否开启调配',
+                `fill_type` int(1) NULL COMMENT '填报内容类型,枚举',
+                `fill_options` varchar(255) NULL COMMENT '填报内容下拉选项，逗号分隔',
+                `unapply_batch_id` varchar(255) NULL COMMENT '不能兼报批次id,逗号分隔',
+                `min` int(2) NULL COMMENT '必须填报的数量，默认为1',
+                `max` int(2) NULL COMMENT '最多可以填报志愿的数量',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 流程对应的学校和专业
+            CREATE TABLE rs_flow_school  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `org_id` int NULL COMMENT '学校的id',
+                `org_name` varchar(16) NULL COMMENT '学校的名称，冗余字段',
+                `flow_id` int NULL COMMENT 'rs_recruit_record_flow 的id',
+                `profession_code` text NULL '专业Code,逗号分隔',
+                `profession_name` text NULL '专业名称,逗号分隔',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 临时表
+            CREATE TABLE re_recruit_record_form_temp  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `field` varchar(16) NULL COMMENT '字段名称',
+                `type` int(1) NULL COMMENT '字段类型',
+                `description` varchar(64) NULL COMMENT '字段描述',
+                `product` int(1) NULL COMMENT '产品，枚举',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 招生学校
+            CREATE TABLE rs_recruit_record_school  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `org_id` int NULL COMMENT '学校的id',
+                `org_name` varchar(16) NULL COMMENT '学校的名称，冗余字段',
+                `recruit_record_batch_id` int NULL COMMENT '招生批次id',
+                `total` int(8) NULL COMMENT '计划招生人数',
+                `is_total_once` tinyint(1) NULL COMMENT '是否共享招生人数',
+                `is_share_plan` tinyint(1) NULL COMMENT '是否公开招生计划',
+                `brief` text NULL COMMENT '招生简章',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 招生学校-专业
+            CREATE TABLE rs_recruit_record_profession (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `recruit_record_batch_id` int NULL COMMENT '招生批次id',
+                `count` int(8) NULL COMMENT '计划招生人数',
+                `recruit_record_school_id` int NULL COMMENT '招生学校表rs_recruit_record_school的id',
+                `code` varchar(8) NULL COMMENT '专业代码',
+                `name` varchar(16) NULL COMMENT '专业名称',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 招生区域
+            CREATE TABLE rs_recruit_record_area  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `org_id` int NULL COMMENT '学校的id',
+                `org_name` varchar(16) NULL COMMENT '学校的名称，冗余字段',
+                `recruit_record_batch_id` int NULL COMMENT '招生批次id',
+                `province` varchar(8) NULL COMMENT '省code',
+                `province_name` varchar(16) NULL COMMENT '省名称',
+                `city` varchar(8) NULL COMMENT '市code',
+                `city_name` varchar(16) NULL COMMENT '市名称',
+                `district` varchar(8) NULL COMMENT '区/县code',
+                `district_name` varchar(16) NULL COMMENT '区/县名称',
+                `town` varchar(8) NULL COMMENT '乡镇/街道code',
+                `town_name` varchar(16) NULL COMMENT '乡镇/街道名称',
+                `village` varchar(8) NULL COMMENT '社区/村code',
+                `village_name` varchar(16) NULL COMMENT '社区/村名称',
+                `group` varchar(8) NULL COMMENT '号，组，号code',
+                `group_name` varchar(16) NULL COMMENT '号，组名称',
+                `detail_address` varchar(64) NULL COMMENT '详细地址',
+                `detail_type` int(1) NULL COMMENT '地址类型，枚举，城区，非城区',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 考试
+            CREATE TABLE rs_exam  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `name` varchar(16) NULL COMMENT '考试名称',
+                `study_year_start` datetime NULL COMMENT '学年开始时间',
+                `study_year_end` datetime NULL COMMENT '学年结束时间',
+                `semester` int(1) NULL COMMENT '学期，枚举',
+                `description` varchar(255) NULL COMMENT '描述',
+                PRIMARY KEY (`id`)
+            );
+
+            
+
+
+            
 
 
 -- ------------SQL语句结束线-------------------
