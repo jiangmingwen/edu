@@ -123,6 +123,19 @@ BEGIN
                 `remark` text NULL COMMENT '备注',
                 `org_id` int NULL COMMENT '组织架构表（sys_org）id',
                 `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `is_calc_total` tinyint(1) NULL COMMENT '是否计入总分',
+                `score_type` int(1) NULL  COMMENT '分数类型，数字，等级，合格',
+                PRIMARY KEY (`id`)
+            ) COMMENT = '课程科目表'; 
+
+            -- 分数-等级规则
+            CREATE TABLE sys_score_transfer_rule  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `score_type` int(1) NULL COMMENT '分数类型，等级，合格',
+                `name` varchar(8) NULL COMMENT '分数名称，合格不合格',
+                `code` int(1) NULL COMMENT '枚举，A,B,C,合格',
+                `value` int(3) NULL COMMENT '对应分数',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
                 PRIMARY KEY (`id`)
             );
 
@@ -326,6 +339,8 @@ BEGIN
                 `study_code` varchar(16) NULL COMMENT '学号',
                 PRIMARY KEY (`id`)
             ); 
+
+
 
             -- 家庭成员
             CREATE TABLE sys_family  (
@@ -652,6 +667,7 @@ BEGIN
             -- 招生记录
             CREATE TABLE rs_recruit_record  (
                 `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `org_id` int NULL COMMENT 'sys_org表的id',
                 `remark` varchar(255) NULL COMMENT '备注',
                 `update_time` datetime NULL COMMENT '更新时间',
                 `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
@@ -743,13 +759,13 @@ BEGIN
                 `org_id` int NULL COMMENT '学校的id',
                 `org_name` varchar(16) NULL COMMENT '学校的名称，冗余字段',
                 `flow_id` int NULL COMMENT 'rs_recruit_record_flow 的id',
-                `profession_code` text NULL '专业Code,逗号分隔',
-                `profession_name` text NULL '专业名称,逗号分隔',
+                `profession_code` text NULL COMMENT '专业Code,逗号分隔',
+                `profession_name` text NULL  COMMENT '专业名称,逗号分隔',
                 PRIMARY KEY (`id`)
             );
 
             -- 临时表
-            CREATE TABLE re_recruit_record_form_temp  (
+            CREATE TABLE pub_form_temp  (
                 `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
                 `remark` text NULL COMMENT '备注',
                 `update_time` datetime NULL COMMENT '更新时间',
@@ -828,14 +844,266 @@ BEGIN
                 `study_year_end` datetime NULL COMMENT '学年结束时间',
                 `semester` int(1) NULL COMMENT '学期，枚举',
                 `description` varchar(255) NULL COMMENT '描述',
+                `category` int(1) NULL COMMENT '考试类型：枚举，升学，普通',
+                `type` int(1) NULL COMMENT '考试类型：枚举，中考，体考',
+                `start_time` datetime NULL COMMENT '开始考试时间',
+                `end_time` datetime NULL COMMENT '结束考试时间',
+                `is_apply` tinyint(1) NULL COMMENT '是否需要报名',
+                `apply_start_time` datetime NULL COMMENT '报名开始时间',
+                `apply_end_time` datetime NULL COMMENT '报名结束时间',
+                `is_query` tinyint(1) NULL COMMENT '是否可用查询成绩',
+                `query_start_time` datetime NULL COMMENT '查询开始时间',
+                `query_end_time` datetime NULL COMMENT '查询结束时间',   
+                `query_count` int(2) NULL COMMENT '成绩查询次数',
+                `is_edit_score` tinyint(1) NULL COMMENT '是否可用修改成绩',
                 PRIMARY KEY (`id`)
             );
 
+             -- 考试-详情
+            CREATE TABLE rs_exam_detail  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `exam_id` int NULL COMMENT '考试表id',
+                `course_code` varchar(16) NULL COMMENT '课程表code',
+                `course_name` varchar(16) NULL COMMENT '课程表名称',
+                `start_time` datetime NULL COMMENT '科目开始考试时间',
+                `end_time` datetime NULL COMMENT '科目结束考试时间',
+                `description` varchar(255) NULL COMMENT '考生须知',
+                `score_unit` int(1) NULL COMMENT '分数单位',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 考试-学校
+            CREATE TABLE rs_exam_school  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `exam_id` int NULL COMMENT '考试表id',
+                `org_id` int NULL COMMENT 'sys_org表的id',
+                `org_name` varchar(16) NULL COMMENT '学校名称',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 考试-学生
+            CREATE TABLE rs_exam_student  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `exam_id` int NULL COMMENT '考试表id',
+                `org_id` int NULL COMMENT 'sys_org表的id',
+                `org_name` varchar(16) NULL COMMENT '学校名字',
+                `student_id` int NULL COMMENT '学生表的id',
+                `student_name` varchar(8) NULL COMMENT '学生名字',
+                `status` int(1) NULL COMMENT '状态，枚举',
+                `opinion` varchar(255) COMMENT '审核意见',
+                `history`  text NULL COMMENT '历史记录,每次把时间，和状态写入',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 考试-报名form
+            CREATE TABLE rs_exam_form  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `exam_id` int NULL COMMENT '考试表id',
+                `form_table` varchar(16) NULL COMMENT '正式表的名称',
+                `form_design` text NULL COMMENT '表单设计',
+                `form_temp_id` int NULL COMMENT '临时表的id',
+                `student_name` int NULL COMMENT '学生名字',
+                PRIMARY KEY (`id`)
+            );
             
+            -- 考试-考点
+            CREATE TABLE rs_exam_site  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `exam_id` int NULL COMMENT '考试表id',
+                `org_id` int NULL COMMENT 'sys_org表的id',
+                `org_name` varchar(16) NULL COMMENT '学校名字',
+                `code` varchar(16) NULL COMMENT '考点代码',
+                `room_count` int(3) NULL COMMENT '考场数量',
+                `start_num` int(3) NULL COMMENT '考场名称开始序号',
+                `prefix` varchar(8) NULL COMMENT '考场名称前缀',
+                `suffix` varchar(8) NULL COMMENT '考场名称后缀',
+                PRIMARY KEY (`id`)
+            );
 
+            -- 考点参加的学校
+            CREATE TABLE rs_exam_site_school  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `exam_id` int NULL COMMENT '考试表id',
+                `site_id` int NULL COMMENT '考点id',
+                `site_name` int NULL COMMENT '考点名称',
+                `org_id` int NULL COMMENT 'sys_org表的id',
+                `org_name` varchar(16) NULL COMMENT '学校名字',
+                `student_count` int(4) NULL COMMENT '学生数量',
+                PRIMARY KEY (`id`)
+            );
 
-            
+            -- 考试-考场
+            CREATE TABLE rs_exam_room  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `exam_id` int NULL COMMENT '考试表id',
+                `org_id` int NULL COMMENT 'sys_org表的id',
+                `org_name` varchar(16) NULL COMMENT '学校名字',
+                `code` varchar(16) NULL COMMENT '考点代码',
+                `room_count` int(3) NULL COMMENT '考场数量',
+                `start_num` int(3) NULL COMMENT '考场名称开始序号',
+                `prefix` varchar(8) NULL COMMENT '考场名称前缀',
+                `suffix` varchar(8) NULL COMMENT '考场名称后缀',
+                PRIMARY KEY (`id`)
+            );
 
+            -- 考试-考场考生编排结果
+            CREATE TABLE rs_exam_student_range  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `rule` int(1) NULL COMMENT '编排规则,枚举',
+                `room_id` int NULL COMMENT '考场id',
+                `room_code` int NULL COMMENT '考场code',
+                `exam_detail_id` int NULL COMMENT '考试详情',
+                `course` int NULL COMMENT '科目',
+                `student_id` int NULL COMMENT '学生',
+                `student_name` int NULL COMMENT '学生名字',
+                `org_id` int NULL COMMENT '学校id',
+                `org_name` int NULL COMMENT '学校名称',
+                `grade_name` varchar(16) COMMENT '年级名称',
+                `class_name` varchar(16) COMMENT '班级名称',
+                `no` varchar(3) NULL COMMENT '座位号',
+                `exam_no` varchar(18) COMMENT '考生考号',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 考试-监考老师候选
+            CREATE TABLE rs_exam_teacher  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `exam_id` int NULL COMMENT '考试表id',
+                `teacher_id` int NULL COMMENT '老师表id',
+                `teacher_name` varchar(16) NULL COMMENT '老师名称',
+                `org_id` int NULL COMMENT 'sys_org表的id',
+                `org_name` varchar(16) NULL COMMENT '学校名字',
+                PRIMARY KEY (`id`)
+            );
+
+            -- 考试-监考老师编排结果
+            CREATE TABLE rs_exam_teacher_range  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `room_id` int NULL COMMENT '考场id',
+                `room_code` int NULL COMMENT '考场code',
+                `exam_detail_id` int NULL COMMENT '考试详情',
+                `exam_id` int NULL COMMENT '考试表id',
+                `teacher_id` int NULL COMMENT '老师表id',
+                `teacher_name` varchar(16) NULL COMMENT '老师名称',
+                `org_id` int NULL COMMENT 'sys_org表的id',
+                `org_name` varchar(16) NULL COMMENT '学校名字',
+                `is_head` tinyint(1) NULL COMMENT '是不是主考',
+                `rule` int(1) NULL COMMENT '编排规则,枚举',
+                PRIMARY KEY (`id`)
+            );
+
+            --  考试-考试成绩
+            CREATE TABLE sc_score  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `exam_id` int NULL COMMENT '考试id',
+                `exam_name` varchar(16) NULL COMMENT '考试名称',
+                `course_code` int NULL COMMENT '科目',
+                `course_name` varchar(16) NULL COMMENT '科目名称',
+                `student_id` int NULL COMMENT '学生id',
+                `student_name` varchar(8) NULL COMMENT '学生名字',
+                `score` float(3, 1)  NULL COMMENT '分数',
+                `score_level` int(1) NULL COMMENT '等级,枚举',
+                `score_qualified` int(1) NULL COMMENT '合格，枚举',
+                `org_id` int NULL COMMENT 'sys_org表的id',
+                `org_name` varchar(16) NULL COMMENT '学校名字',
+                `grade_name` varchar(16) COMMENT '年级名称',
+                `class_name` varchar(16) COMMENT '班级名称',
+                `status` int(1) COMMENT '状态枚举，发布状态',
+                PRIMARY KEY (`id`)
+            );
+
+            --  基础-问卷调查
+            CREATE TABLE sys_questionnaire  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `name` varchar(32) NULL COMMENT '问卷调查名称',
+                `start_time` datetime NULL COMMENT '有效时间-开始',
+                `end_time` datetime NULL COMMENT '有效时间-结束',
+                `org_id` int NULL COMMENT '组织id',
+                `org_name` varchar(16) NULL COMMENT '组织名称',
+                `status` int(1) NULL COMMENT '发布状态',
+                `target` int(1) NULL COMMENT '目标类型，针对学生，老师，学校',
+                `is_question_no` tinyint(1) NULL COMMENT '是否展示问题序号',
+                `question_no_type` int(1) NULL COMMENT '问题序号类型，枚举',
+                `is_options_no` tinyint(1) NULL COMMENT '是否展示选项序号',
+                `options_no_type` int(1) NULL COMMENT '选项题序号类型，枚举',
+                PRIMARY KEY (`id`)
+            );
+
+            --  基础-问卷问题
+            CREATE TABLE sys_questionnaire_question  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `questionnaire_id` int NULL COMMENT '问卷id',
+                `name` varchar(32) NULL COMMENT '问题名称',
+                `control` int(1) NULL COMMENT '控件类型,枚举',
+                `required` tinyint(1) NULL COMMENT '是否必填',
+                `sort_no` int(3) NULL COMMENT '排序序号',
+                PRIMARY KEY (`id`)
+            );
+
+            --  基础-问卷问题-选项
+            CREATE TABLE sys_questionnaire_options  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `question_id` int NULL COMMENT '问题id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `name` varchar(32) NULL COMMENT '选项名称',
+                `sort_no` int(3) NULL COMMENT '排序序号',
+                PRIMARY KEY (`id`)
+            );
+
+            --  基础-问卷填写
+            CREATE TABLE sys_questionnaire_result  (
+                `id` int NOT NULL AUTO_INCREMENT COMMENT 'id',
+                `remark` text NULL COMMENT '备注',
+                `update_time` datetime NULL COMMENT '更新时间',
+                `delete_flag` tinyint(1) NULL COMMENT '删除标识，枚举',
+                `user_id` int NULL COMMENT '用户id',
+                `org_id` int NULL COMMENT '组织id',
+                `questionnaire_id` int NULL COMMENT '问卷id',
+                `question_id` int NULL COMMENT '问题id',
+                `options_id` int NULL COMMENT '选项id',
+                PRIMARY KEY (`id`)
+            );
 
 -- ------------SQL语句结束线-------------------
             CALL UPDATE_DB_VERSION(version);
@@ -863,7 +1131,7 @@ CALL DB_UPGRADE(1.1);
 -- 1.1结束
 
 
--- ---------------------------------脚本结束区域------------------------------------------------------
+-- **********************************脚本结束区域**********************************
 
 -- ------------固定->清除过程和函数-----------------
 DROP  PROCEDURE  IF  EXISTS  DB_UPGRADE;
